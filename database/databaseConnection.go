@@ -21,7 +21,9 @@ type Connection struct {
 	*mongo.Database
 }
 
-func ConnectToDB() (*Connection, error) {
+var MongoConn *Connection
+
+func ConnectToDB() {
 	p := config.Config("DB_PORT")
 	n := config.Config("DB_NAME")
 	h := config.Config("DB_HOST")
@@ -30,12 +32,12 @@ func ConnectToDB() (*Connection, error) {
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(n+h+p))
-	if err != nil {
-		return nil, err
-	}
 
+	if err != nil {
+		panic(err)
+	}
 	// create database
-	db := client.Database("user-service")
+	db := client.Database("story-service")
 
 	// create collection
 	userCollection := db.Collection("users")
@@ -51,5 +53,5 @@ func ConnectToDB() (*Connection, error) {
 		commentsCollection, repliesCollection, readLaterCollection,
 		conversationCollection, messageCollection, db}
 
-	return dbConnection, nil
+	MongoConn = dbConnection
 }

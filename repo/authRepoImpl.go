@@ -25,8 +25,7 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 	var login domain.Authentication
 	var user domain.User
 
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	if util.IsEmail(username) {
 		opts := options.FindOne()
@@ -77,8 +76,8 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 }
 
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	var user domain.User
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
@@ -123,8 +122,8 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 }
 
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	user := new(domain.User)
 	ur := new(UserRepoImpl)
@@ -152,8 +151,8 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 }
 
 func (a AuthRepoImpl) VerifyCode(code string) error{
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	var user domain.User
 	ur := new(UserRepoImpl)

@@ -5,9 +5,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"story-app-monolith/database"
 	"story-app-monolith/router"
 )
 
+func init() {
+	database.ConnectToDB()
+}
 func main() {
 	app := router.Setup()
 

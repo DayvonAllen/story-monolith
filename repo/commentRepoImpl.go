@@ -27,8 +27,8 @@ type CommentRepoImpl struct {
 }
 
 func (c CommentRepoImpl) Create(comment *domain.Comment) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	story := new(domain.Story)
 
@@ -48,8 +48,8 @@ func (c CommentRepoImpl) Create(comment *domain.Comment) error {
 }
 
 func (c CommentRepoImpl) FindAllCommentsByResourceId(resourceID primitive.ObjectID, username string) (*[]domain.CommentDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	cur, err := conn.CommentsCollection.Find(context.TODO(), bson.D{{"resourceId", resourceID}})
 
@@ -109,8 +109,8 @@ func (c CommentRepoImpl) FindAllCommentsByResourceId(resourceID primitive.Object
 }
 
 func (c CommentRepoImpl) UpdateById(id primitive.ObjectID, newContent string, edited bool, updatedTime time.Time, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}, {"authorUsername", username}}
@@ -128,8 +128,8 @@ func (c CommentRepoImpl) UpdateById(id primitive.ObjectID, newContent string, ed
 }
 
 func (c CommentRepoImpl) LikeCommentById(commentId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	ctx := context.TODO()
 
@@ -204,8 +204,8 @@ func (c CommentRepoImpl) LikeCommentById(commentId primitive.ObjectID, username 
 }
 
 func (c CommentRepoImpl) DisLikeCommentById(commentId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	ctx := context.TODO()
 
@@ -280,8 +280,8 @@ func (c CommentRepoImpl) DisLikeCommentById(commentId primitive.ObjectID, userna
 }
 
 func (c CommentRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
@@ -305,8 +305,7 @@ func (c CommentRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 }
 
 func (c CommentRepoImpl) DeleteById(id primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	// sets mongo's read and write concerns
 	wc := writeconcern.New(writeconcern.WMajority())
@@ -380,8 +379,8 @@ func (c CommentRepoImpl) DeleteById(id primitive.ObjectID, username string) erro
 }
 
 func (c CommentRepoImpl) DeleteManyById(id primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	err := conn.CommentsCollection.FindOne(context.TODO(), bson.D{{"resourceId", id}}).Decode(&c.Comment)
 

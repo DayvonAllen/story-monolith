@@ -19,8 +19,7 @@ type ReadLaterRepoImpl struct {
 }
 
 func (r ReadLaterRepoImpl) Create(username string, storyId primitive.ObjectID) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	story := new(domain.StoryDto)
 	err := conn.StoryCollection.FindOne(context.TODO(), bson.D{{"_id", storyId}}).Decode(&story)
@@ -54,8 +53,7 @@ func (r ReadLaterRepoImpl) Create(username string, storyId primitive.ObjectID) e
 }
 
 func (r ReadLaterRepoImpl) GetByUsername(username string) (*domain.ReadLaterDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	cur, err := conn.ReadLaterCollection.Find(context.TODO(), bson.D{{"username", username}})
 
@@ -80,8 +78,7 @@ func (r ReadLaterRepoImpl) GetByUsername(username string) (*domain.ReadLaterDto,
 }
 
 func (r ReadLaterRepoImpl) Delete(id primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	res, err := conn.ReadLaterCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}, {"username", username}})
 

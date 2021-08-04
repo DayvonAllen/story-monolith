@@ -23,8 +23,7 @@ type ReplyRepoImpl struct {
 }
 
 func (r ReplyRepoImpl) Create(comment *domain.Reply) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	commentObj := new(domain.Comment)
 
@@ -44,8 +43,7 @@ func (r ReplyRepoImpl) Create(comment *domain.Reply) error {
 }
 
 func (r ReplyRepoImpl) FindAllRepliesByResourceId(resourceID primitive.ObjectID, username string) (*[]domain.Reply, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	cur, err := conn.RepliesCollection.Find(context.TODO(), bson.D{{"resourceId", resourceID}})
 
@@ -80,8 +78,7 @@ func (r ReplyRepoImpl) FindAllRepliesByResourceId(resourceID primitive.ObjectID,
 }
 
 func (r ReplyRepoImpl) UpdateById(id primitive.ObjectID, newContent string, edited bool, updatedTime time.Time, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}, {"authorUsername", username}}
@@ -99,8 +96,7 @@ func (r ReplyRepoImpl) UpdateById(id primitive.ObjectID, newContent string, edit
 }
 
 func (r ReplyRepoImpl) LikeReplyById(commentId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	ctx := context.TODO()
 
@@ -175,8 +171,7 @@ func (r ReplyRepoImpl) LikeReplyById(commentId primitive.ObjectID, username stri
 }
 
 func (r ReplyRepoImpl) DisLikeReplyById(commentId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	ctx := context.TODO()
 
@@ -251,8 +246,7 @@ func (r ReplyRepoImpl) DisLikeReplyById(commentId primitive.ObjectID, username s
 }
 
 func (r ReplyRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
@@ -276,8 +270,7 @@ func (r ReplyRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 }
 
 func (r ReplyRepoImpl) DeleteById(id primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	// sets mongo's read and write concerns
 	wc := writeconcern.New(writeconcern.WMajority())

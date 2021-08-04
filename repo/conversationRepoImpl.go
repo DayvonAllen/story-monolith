@@ -23,8 +23,7 @@ type ConversationRepoImpl struct {
 }
 
 func (c ConversationRepoImpl) Create(message domain.Message) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", message.To}}).Decode(&c.User)
 
@@ -86,8 +85,8 @@ func (c ConversationRepoImpl) Create(message domain.Message) error {
 }
 
 func (c ConversationRepoImpl) FindByOwner(message domain.Message) (*domain.Conversation, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	fmt.Println(message)
 	filter := bson.D{{"owner", message.From}}
@@ -103,8 +102,8 @@ func (c ConversationRepoImpl) FindByOwner(message domain.Message) (*domain.Conve
 }
 
 func (c ConversationRepoImpl) FindConversation(owner, to string) (*domain.Conversation, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	if owner == to {
 		return nil, fmt.Errorf("bad request")
@@ -194,8 +193,8 @@ func (c ConversationRepoImpl) FindConversation(owner, to string) (*domain.Conver
 }
 
 func (c ConversationRepoImpl) GetConversationPreviews(owner string) (*[]domain.ConversationPreview, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	filter := bson.M{
 		"owner": owner,
@@ -233,8 +232,8 @@ func (c ConversationRepoImpl) GetConversationPreviews(owner string) (*[]domain.C
 
 
 func (c ConversationRepoImpl) UpdateConversation(conversation domain.Conversation, message domain.Message) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.M{
@@ -275,8 +274,7 @@ func (c ConversationRepoImpl) UpdateConversation(conversation domain.Conversatio
 }
 
 func (c ConversationRepoImpl) DeleteByID(conversationId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	res, err := conn.ConversationCollection.DeleteOne(context.TODO(), bson.D{{"_id", conversationId}, {"owner", username}})
 
@@ -292,8 +290,7 @@ func (c ConversationRepoImpl) DeleteByID(conversationId primitive.ObjectID, user
 }
 
 func (c ConversationRepoImpl) DeleteAllByUsername(username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	res, err := conn.ConversationCollection.DeleteMany(context.TODO(), bson.D{{"owner", username}})
 

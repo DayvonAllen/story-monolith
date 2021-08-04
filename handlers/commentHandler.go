@@ -5,7 +5,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"story-app-monolith/database"
 	"story-app-monolith/domain"
 	"story-app-monolith/services"
 	"time"
@@ -19,7 +18,6 @@ func (ch *CommentHandler) CreateCommentOnStory(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	currentUsername := c.Locals("username").(string)
 
-
 	comment := new(domain.Comment)
 
 	err := c.BodyParser(comment)
@@ -29,9 +27,6 @@ func (ch *CommentHandler) CreateCommentOnStory(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
 
 	comment.Likes = make([]string, 0, 0)
 	comment.Dislikes = make([]string, 0, 0)

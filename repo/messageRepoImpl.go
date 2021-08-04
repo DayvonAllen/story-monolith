@@ -18,9 +18,7 @@ type MessageRepoImpl struct {
 }
 
 func (m MessageRepoImpl) Create(message *domain.Message) (*domain.Conversation, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
-
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", message.To}}).Decode(&m.User)
 
@@ -93,8 +91,7 @@ func (m MessageRepoImpl) Create(message *domain.Message) (*domain.Conversation, 
 }
 
 func (m MessageRepoImpl) DeleteByID(owner string, id primitive.ObjectID) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	filter := bson.D{{"_id", id}}
 
@@ -134,8 +131,7 @@ func exists(id primitive.ObjectID, ids []domain.DeleteMessage) bool {
 }
 
 func (m MessageRepoImpl) DeleteAllByIDs(owner string, messageIds []domain.DeleteMessage) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	if len(messageIds) == 0 {
 		return fmt.Errorf("bad values")

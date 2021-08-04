@@ -30,11 +30,9 @@ type UserRepoImpl struct {
 }
 
 func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, username string) (*domain.UserResponse, error) {
-
 	var currentUser *domain.UserDto
 
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	currentUser, err := u.FindByID(id, ctx)
 
@@ -77,8 +75,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 }
 
 func (u UserRepoImpl) GetCurrentUserProfile(username string) (*domain.CurrentUserProfile, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.currentUser)
 
@@ -102,8 +99,7 @@ func (u UserRepoImpl) GetCurrentUserProfile(username string) (*domain.CurrentUse
 }
 
 func (u UserRepoImpl) GetUserProfile(username, currentUsername string) (*domain.ViewUserProfile, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.viewedUser)
 
@@ -154,8 +150,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID, ctx context.Con
 
 	var currentUser *domain.UserDto
 
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	currentUser, err := u.FindByID(id, ctx)
 
@@ -184,18 +179,14 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID, ctx context.Con
 }
 
 func (u UserRepoImpl) Create(user *domain.User) error {
-	fmt.Println("fetching...")
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
-	fmt.Println("looking...")
 	cur, err := conn.UserCollection.Find(context.TODO(), bson.M{
 		"$or": []interface{}{
 			bson.M{"email": user.Email},
 			bson.M{"username": user.Username},
 		},
 	})
-	fmt.Println("not found...")
 
 	if err != nil {
 		return fmt.Errorf("error processing data")
@@ -230,8 +221,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 }
 
 func (u UserRepoImpl) FindByID(id primitive.ObjectID, ctx context.Context) (*domain.UserDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
@@ -247,8 +237,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID, ctx context.Context) (*dom
 }
 
 func (u UserRepoImpl) FindByUsername(username string, ctx context.Context) (*domain.UserDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
 	[]interface{}{
@@ -268,8 +257,7 @@ func (u UserRepoImpl) FindByUsername(username string, ctx context.Context) (*dom
 }
 
 func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -282,8 +270,7 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 }
 
 func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -303,8 +290,8 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 }
 
 func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -323,8 +310,8 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 }
 
 func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -343,8 +330,8 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 }
 
 func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -363,8 +350,8 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 }
 
 func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -383,8 +370,7 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 }
 
 func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline, ctx context.Context) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -403,10 +389,7 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 }
 
 func (u UserRepoImpl) UpdateDisplayFollowerCount(id primitive.ObjectID, user *domain.UpdateDisplayFollowerCount) error{
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
-
-	fmt.Println(user)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -425,8 +408,7 @@ func (u UserRepoImpl) UpdateDisplayFollowerCount(id primitive.ObjectID, user *do
 }
 
 func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -449,8 +431,7 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 }
 
 func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -463,8 +444,7 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 }
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
@@ -502,8 +482,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 }
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, ctx context.Context, currentUsername string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
@@ -597,8 +576,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, ctx cont
 }
 
 func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, ctx context.Context, currentUsername string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
@@ -708,8 +686,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, ctx co
 }
 
 func (u UserRepoImpl) FollowUser(username string, currentUser string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUser}}).Decode(&u.user)
 
@@ -789,8 +766,7 @@ func (u UserRepoImpl) FollowUser(username string, currentUser string) error {
 }
 
 func (u UserRepoImpl) UnfollowUser(username string, currentUser string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUser}}).Decode(&u.user)
 
@@ -877,8 +853,7 @@ func (u UserRepoImpl) UnfollowUser(username string, currentUser string) error {
 }
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, ctx context.Context, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	_, err := conn.UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
 

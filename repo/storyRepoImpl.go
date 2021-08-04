@@ -28,8 +28,7 @@ type StoryRepoImpl struct {
 }
 
 func (s StoryRepoImpl) Create(story *domain.CreateStoryDto) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	story.Id = primitive.NewObjectID()
 
@@ -49,8 +48,7 @@ func (s StoryRepoImpl) Create(story *domain.CreateStoryDto) error {
 }
 
 func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newTitle string, username string, tags *[]domain.Tag, updated bool) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	filter := bson.D{{"_id", id}, {"authorUsername", username}}
 	update := bson.D{{"$set",
@@ -78,8 +76,7 @@ func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newT
 }
 
 func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*[]domain.Story, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	findOptions := options.FindOptions{}
 	perPage := 10
@@ -116,8 +113,8 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*[]domain.Sto
 }
 
 func (s StoryRepoImpl) FindAllByUsername(username string) (*[]domain.StoryDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 
 	cur, err := conn.StoryCollection.Find(context.TODO(), bson.D{{"authorUsername", username}})
 
@@ -140,8 +137,7 @@ func (s StoryRepoImpl) FindAllByUsername(username string) (*[]domain.StoryDto, e
 }
 
 func (s StoryRepoImpl) FeaturedStories() (*[]domain.FeaturedStoryDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	findOptions := options.FindOptions{}
 
@@ -169,8 +165,7 @@ func (s StoryRepoImpl) FeaturedStories() (*[]domain.FeaturedStoryDto, error) {
 }
 
 func (s StoryRepoImpl) LikeStoryById(storyId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	ctx := context.TODO()
 
@@ -246,8 +241,7 @@ func (s StoryRepoImpl) LikeStoryById(storyId primitive.ObjectID, username string
 }
 
 func (s StoryRepoImpl) DisLikeStoryById(storyId primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	ctx := context.TODO()
 
@@ -323,8 +317,7 @@ func (s StoryRepoImpl) DisLikeStoryById(storyId primitive.ObjectID, username str
 }
 
 func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string) (*domain.StoryDto, error) {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	err := conn.StoryCollection.FindOne(context.TODO(), bson.D{{"_id", storyID}}).Decode(&s.StoryDto)
 
@@ -364,8 +357,7 @@ func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string) (*d
 }
 
 func (s StoryRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
 
 	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
@@ -389,8 +381,8 @@ func (s StoryRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 }
 
 func (s StoryRepoImpl) DeleteById(id primitive.ObjectID, username string) error {
-	conn := database.MongoConnectionPool.Get().(*database.Connection)
-	defer database.MongoConnectionPool.Put(conn)
+	conn := database.MongoConn
+
 	// sets mongo's read and write concerns
 	wc := writeconcern.New(writeconcern.WMajority())
 	rc := readconcern.Snapshot()
