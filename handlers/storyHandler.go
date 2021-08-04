@@ -16,21 +16,15 @@ type StoryHandler struct {
 }
 
 func (s *StoryHandler) CreateStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
 	c.Accepts("application/json")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
 
 	storyDto := new(domain.CreateStoryDto)
 
-	err = c.BodyParser(storyDto)
+	currentUsername := c.Locals("username").(string)
 
-	storyDto.AuthorUsername = u.Username
+	err := c.BodyParser(storyDto)
+
+	storyDto.AuthorUsername = currentUsername
 	storyDto.CreatedAt = time.Now()
 	storyDto.UpdatedAt = time.Now()
 	storyDto.Likes = make([]string, 0)
@@ -96,19 +90,13 @@ func (s *StoryHandler) FeaturedStories(c *fiber.Ctx) error {
 }
 
 func (s *StoryHandler) UpdateStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
 	c.Accepts("application/json")
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	storyDto := new(domain.UpdateStoryDto)
 
-	err = c.BodyParser(storyDto)
+	err := c.BodyParser(storyDto)
 
 	storyDto.UpdatedAt = time.Now()
 	storyDto.Updated = true
@@ -138,7 +126,7 @@ func (s *StoryHandler) UpdateStory(c *fiber.Ctx) error {
 		}
 	}
 
-	err = s.StoryService.UpdateById(id, storyDto.Content, storyDto.Title, u.Username, &storyDto.Tags, storyDto.Updated)
+	err = s.StoryService.UpdateById(id, storyDto.Content, storyDto.Title, currentUsername, &storyDto.Tags, storyDto.Updated)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -148,14 +136,7 @@ func (s *StoryHandler) UpdateStory(c *fiber.Ctx) error {
 }
 
 func (s *StoryHandler) FindStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -163,7 +144,7 @@ func (s *StoryHandler) FindStory(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	story, err := s.StoryService.FindById(id, u.Username)
+	story, err := s.StoryService.FindById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -173,14 +154,7 @@ func (s *StoryHandler) FindStory(c *fiber.Ctx) error {
 }
 
 func (s *StoryHandler) LikeStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -188,7 +162,7 @@ func (s *StoryHandler) LikeStory(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = s.StoryService.LikeStoryById(id, u.Username)
+	err = s.StoryService.LikeStoryById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -198,14 +172,7 @@ func (s *StoryHandler) LikeStory(c *fiber.Ctx) error {
 }
 
 func (s *StoryHandler) DisLikeStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -213,7 +180,7 @@ func (s *StoryHandler) DisLikeStory(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = s.StoryService.DisLikeStoryById(id, u.Username)
+	err = s.StoryService.DisLikeStoryById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -224,18 +191,12 @@ func (s *StoryHandler) DisLikeStory(c *fiber.Ctx) error {
 
 func (s *StoryHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUserId := c.Locals("id").(primitive.ObjectID)
 
 	flag := new(domain.Flag)
 
-	err = c.BodyParser(flag)
+	err := c.BodyParser(flag)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -248,7 +209,7 @@ func (s *StoryHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	}
 
 	flag.FlaggedResource = id
-	flag.FlaggerID = u.Id
+	flag.FlaggerID = currentUserId
 
 	err = s.StoryService.UpdateFlagCount(flag)
 
@@ -262,14 +223,7 @@ func (s *StoryHandler) UpdateFlagCount(c *fiber.Ctx) error {
 }
 
 func (s *StoryHandler) DeleteStory(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -277,7 +231,7 @@ func (s *StoryHandler) DeleteStory(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = s.StoryService.DeleteById(id, u.Username)
+	err = s.StoryService.DeleteById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

@@ -16,18 +16,11 @@ type ReplyHandler struct {
 
 func (rh *ReplyHandler) CreateReply(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	replyDto := new(domain.CreateReply)
 
-	err = c.BodyParser(replyDto)
+	err := c.BodyParser(replyDto)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -40,7 +33,7 @@ func (rh *ReplyHandler) CreateReply(c *fiber.Ctx) error {
 	reply.Likes = make([]string, 0, 0)
 	reply.Dislikes = make([]string, 0, 0)
 	reply.Id = primitive.NewObjectID()
-	reply.AuthorUsername = u.Username
+	reply.AuthorUsername = currentUsername
 	reply.Content = replyDto.Content
 	reply.ResourceId = id
 	reply.CreatedAt = time.Now()
@@ -59,19 +52,12 @@ func (rh *ReplyHandler) CreateReply(c *fiber.Ctx) error {
 
 func (rh *ReplyHandler) UpdateById(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	c.Accepts("application/json")
-	token := c.Get("Authorization")
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	reply := new(domain.Reply)
 
-	err = c.BodyParser(reply)
+	err := c.BodyParser(reply)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -87,7 +73,7 @@ func (rh *ReplyHandler) UpdateById(c *fiber.Ctx) error {
 	reply.Edited = true
 	reply.UpdatedDate = reply.UpdatedAt.Format("January 2, 2006 at 3:04pm")
 
-	err = rh.ReplyService.UpdateById(id, reply.Content, reply.Edited, reply.UpdatedAt, u.Username)
+	err = rh.ReplyService.UpdateById(id, reply.Content, reply.Edited, reply.UpdatedAt, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -97,14 +83,7 @@ func (rh *ReplyHandler) UpdateById(c *fiber.Ctx) error {
 }
 
 func (rh *ReplyHandler) LikeReply(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -112,7 +91,7 @@ func (rh *ReplyHandler) LikeReply(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = rh.ReplyService.LikeReplyById(id, u.Username)
+	err = rh.ReplyService.LikeReplyById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -122,14 +101,7 @@ func (rh *ReplyHandler) LikeReply(c *fiber.Ctx) error {
 }
 
 func (rh *ReplyHandler) DisLikeReply(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -137,7 +109,7 @@ func (rh *ReplyHandler) DisLikeReply(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = rh.ReplyService.DisLikeReplyById(id, u.Username)
+	err = rh.ReplyService.DisLikeReplyById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -148,18 +120,11 @@ func (rh *ReplyHandler) DisLikeReply(c *fiber.Ctx) error {
 
 func (rh *ReplyHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUserId := c.Locals("id").(primitive.ObjectID)
 
 	flag := new(domain.Flag)
 
-	err = c.BodyParser(flag)
+	err := c.BodyParser(flag)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -172,7 +137,7 @@ func (rh *ReplyHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	}
 
 	flag.FlaggedResource = id
-	flag.FlaggerID = u.Id
+	flag.FlaggerID = currentUserId
 
 	err = rh.ReplyService.UpdateFlagCount(flag)
 
@@ -186,14 +151,7 @@ func (rh *ReplyHandler) UpdateFlagCount(c *fiber.Ctx) error {
 }
 
 func (rh *ReplyHandler) DeleteById(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -201,7 +159,7 @@ func (rh *ReplyHandler) DeleteById(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = rh.ReplyService.DeleteById(id, u.Username)
+	err = rh.ReplyService.DeleteById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

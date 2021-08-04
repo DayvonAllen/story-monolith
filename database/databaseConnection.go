@@ -10,12 +10,14 @@ import (
 
 type Connection struct {
 	*mongo.Client
-	UserCollection      *mongo.Collection
-	FlagCollection      *mongo.Collection
-	StoryCollection     *mongo.Collection
-	ReadLaterCollection *mongo.Collection
-	CommentsCollection  *mongo.Collection
-	RepliesCollection   *mongo.Collection
+	UserCollection         *mongo.Collection
+	FlagCollection         *mongo.Collection
+	StoryCollection        *mongo.Collection
+	ReadLaterCollection    *mongo.Collection
+	CommentsCollection     *mongo.Collection
+	RepliesCollection      *mongo.Collection
+	ConversationCollection *mongo.Collection
+	MessageCollection      *mongo.Collection
 	*mongo.Database
 }
 
@@ -41,10 +43,13 @@ func ConnectToDB() (*Connection, error) {
 	storiesCollection := db.Collection("stories")
 	commentsCollection := db.Collection("comments")
 	repliesCollection := db.Collection("replies")
-	readLaterCollection := db.Collection("readLaterCollection")
+	readLaterCollection := db.Collection("readLater")
+	conversationCollection := db.Collection("conversation")
+	messageCollection := db.Collection("message")
 
 	dbConnection := &Connection{client, userCollection, flagCollection, storiesCollection,
-		commentsCollection, repliesCollection, readLaterCollection, db}
+		commentsCollection, repliesCollection, readLaterCollection,
+		conversationCollection, messageCollection, db}
 
 	return dbConnection, nil
 }

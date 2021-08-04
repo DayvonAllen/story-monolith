@@ -18,6 +18,8 @@ func SetupRoutes(app *fiber.App) {
 	sh := handlers.StoryHandler{StoryService: services.NewStoryService(repo.NewStoryRepoImpl())}
 	rh := handlers.ReadLaterHandler{ReadLaterService: services.NewReadLaterService(repo.NewReadLaterRepoImpl())}
 	reh := handlers.ReplyHandler{ReplyService: services.NewReplyService(repo.NewReplyRepoImpl())}
+	mh := handlers.MessageHandler{MessageService: services.NewMessageService(repo.NewMessageRepoImpl())}
+	conh := handlers.ConversationHandler{ConversationService: services.NewConversationService(repo.NewConversationRepoImpl())}
 
 	app.Use(recover.New())
 	api := app.Group("", logger.New())
@@ -49,39 +51,48 @@ func SetupRoutes(app *fiber.App) {
 
 	profile := api.Group("/profile")
 	profile.Get("/:username", middleware.IsLoggedIn, uh.GetUserProfile)
-	profile.Get("/", uh.GetCurrentUserProfile)
+	profile.Get("/", middleware.IsLoggedIn, uh.GetCurrentUserProfile)
 
 	stories := api.Group("/stories")
-	stories.Post("/", sh.CreateStory)
-	stories.Put("/:id", sh.UpdateStory)
-	stories.Put("/like/:id", sh.LikeStory)
-	stories.Put("/dislike/:id", sh.DisLikeStory)
-	stories.Put("/flag/:id", sh.UpdateFlagCount)
+	stories.Post("/", middleware.IsLoggedIn, sh.CreateStory)
+	stories.Put("/:id", middleware.IsLoggedIn, sh.UpdateStory)
+	stories.Put("/like/:id", middleware.IsLoggedIn, sh.LikeStory)
+	stories.Put("/dislike/:id", middleware.IsLoggedIn, sh.DisLikeStory)
+	stories.Put("/flag/:id", middleware.IsLoggedIn, sh.UpdateFlagCount)
 	stories.Get("/featured", sh.FeaturedStories)
-	stories.Get("/:id", sh.FindStory)
-	stories.Delete("/:id", sh.DeleteStory)
+	stories.Get("/:id", middleware.IsLoggedIn, sh.FindStory)
+	stories.Delete("/:id", middleware.IsLoggedIn, sh.DeleteStory)
 	stories.Get("/", middleware.IsLoggedIn, sh.FindAll)
 
 	comments := api.Group("/comment")
-	comments.Post("/:id", ch.CreateCommentOnStory)
-	comments.Put("/like/:id", ch.LikeComment)
-	comments.Put("/dislike/:id", ch.DisLikeComment)
-	comments.Put("/flag/:id", ch.UpdateFlagCount)
-	comments.Put("/:id", ch.UpdateById)
-	comments.Delete("/:id", ch.DeleteById)
+	comments.Post("/:id", middleware.IsLoggedIn, ch.CreateCommentOnStory)
+	comments.Put("/like/:id", middleware.IsLoggedIn, ch.LikeComment)
+	comments.Put("/dislike/:id", middleware.IsLoggedIn, ch.DisLikeComment)
+	comments.Put("/flag/:id", middleware.IsLoggedIn, ch.UpdateFlagCount)
+	comments.Put("/:id", middleware.IsLoggedIn, ch.UpdateById)
+	comments.Delete("/:id", middleware.IsLoggedIn, ch.DeleteById)
 
 	reply := api.Group("/reply")
-	reply.Post("/:id", reh.CreateReply)
-	reply.Put("/like/:id", reh.LikeReply)
-	reply.Put("/dislike/:id", reh.DisLikeReply)
-	reply.Put("/flag/:id", reh.UpdateFlagCount)
-	reply.Put("/:id", reh.UpdateById)
-	reply.Delete("/:id", reh.DeleteById)
+	reply.Post("/:id", middleware.IsLoggedIn, reh.CreateReply)
+	reply.Put("/like/:id", middleware.IsLoggedIn, reh.LikeReply)
+	reply.Put("/dislike/:id", middleware.IsLoggedIn, reh.DisLikeReply)
+	reply.Put("/flag/:id", middleware.IsLoggedIn, reh.UpdateFlagCount)
+	reply.Put("/:id", middleware.IsLoggedIn, reh.UpdateById)
+	reply.Delete("/:id", middleware.IsLoggedIn, reh.DeleteById)
 
 	readLater := api.Group("/read")
-	readLater.Post("/:id", rh.Create)
-	readLater.Get("/", rh.GetByUsername)
-	readLater.Delete("/:id", rh.Delete)
+	readLater.Post("/:id", middleware.IsLoggedIn, rh.Create)
+	readLater.Get("/", middleware.IsLoggedIn, rh.GetByUsername)
+	readLater.Delete("/:id", middleware.IsLoggedIn, rh.Delete)
+
+	messages := api.Group("/messages")
+	messages.Post("/", middleware.IsLoggedIn, mh.CreateMessage)
+	messages.Delete("/multi", middleware.IsLoggedIn, mh.DeleteByIDs)
+	messages.Delete("/", middleware.IsLoggedIn, mh.DeleteByID)
+
+	conversations := api.Group("/conversation")
+	conversations.Get("/:username", middleware.IsLoggedIn, conh.FindConversation)
+	conversations.Get("/", middleware.IsLoggedIn, conh.GetConversationPreviews)
 }
 
 func Setup() *fiber.App {

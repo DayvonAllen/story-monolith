@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"story-app-monolith/domain"
 	"story-app-monolith/services"
 )
 
@@ -13,14 +12,7 @@ type ReadLaterHandler struct {
 }
 
 func (r *ReadLaterHandler) Create(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -28,7 +20,7 @@ func (r *ReadLaterHandler) Create(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = r.ReadLaterService.Create(u.Username, id)
+	err = r.ReadLaterService.Create(currentUsername, id)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -38,16 +30,9 @@ func (r *ReadLaterHandler) Create(c *fiber.Ctx) error {
 }
 
 func (r *ReadLaterHandler) GetByUsername(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
+	currentUsername := c.Locals("username").(string)
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
-
-	items, err := r.ReadLaterService.GetByUsername(u.Username)
+	items, err := r.ReadLaterService.GetByUsername(currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -57,14 +42,7 @@ func (r *ReadLaterHandler) GetByUsername(c *fiber.Ctx) error {
 }
 
 func (r *ReadLaterHandler) Delete(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -72,7 +50,7 @@ func (r *ReadLaterHandler) Delete(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = r.ReadLaterService.Delete(id, u.Username)
+	err = r.ReadLaterService.Delete(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

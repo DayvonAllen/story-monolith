@@ -17,18 +17,12 @@ type CommentHandler struct {
 
 func (ch *CommentHandler) CreateCommentOnStory(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
+	currentUsername := c.Locals("username").(string)
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
 
 	comment := new(domain.Comment)
 
-	err = c.BodyParser(comment)
+	err := c.BodyParser(comment)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -42,7 +36,7 @@ func (ch *CommentHandler) CreateCommentOnStory(c *fiber.Ctx) error {
 	comment.Likes = make([]string, 0, 0)
 	comment.Dislikes = make([]string, 0, 0)
 	comment.Id = primitive.NewObjectID()
-	comment.AuthorUsername = u.Username
+	comment.AuthorUsername = currentUsername
 	comment.ResourceId = id
 	comment.CreatedAt = time.Now()
 	comment.UpdatedAt = time.Now()
@@ -60,19 +54,12 @@ func (ch *CommentHandler) CreateCommentOnStory(c *fiber.Ctx) error {
 
 func (ch *CommentHandler) UpdateById(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	c.Accepts("application/json")
-	token := c.Get("Authorization")
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	comment := new(domain.Comment)
 
-	err = c.BodyParser(comment)
+	err := c.BodyParser(comment)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -88,7 +75,7 @@ func (ch *CommentHandler) UpdateById(c *fiber.Ctx) error {
 	comment.Edited = true
 	comment.UpdatedDate = comment.UpdatedAt.Format("January 2, 2006 at 3:04pm")
 
-	err = ch.CommentService.UpdateById(id, comment.Content, comment.Edited, comment.UpdatedAt, u.Username)
+	err = ch.CommentService.UpdateById(id, comment.Content, comment.Edited, comment.UpdatedAt, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -98,14 +85,7 @@ func (ch *CommentHandler) UpdateById(c *fiber.Ctx) error {
 }
 
 func (ch *CommentHandler) LikeComment(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -113,7 +93,7 @@ func (ch *CommentHandler) LikeComment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = ch.CommentService.LikeCommentById(id, u.Username)
+	err = ch.CommentService.LikeCommentById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -123,14 +103,7 @@ func (ch *CommentHandler) LikeComment(c *fiber.Ctx) error {
 }
 
 func (ch *CommentHandler) DisLikeComment(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -138,7 +111,7 @@ func (ch *CommentHandler) DisLikeComment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = ch.CommentService.DisLikeCommentById(id, u.Username)
+	err = ch.CommentService.DisLikeCommentById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -149,18 +122,12 @@ func (ch *CommentHandler) DisLikeComment(c *fiber.Ctx) error {
 
 func (ch *CommentHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUserId := c.Locals("id").(primitive.ObjectID)
 
 	flag := new(domain.Flag)
 
-	err = c.BodyParser(flag)
+	err := c.BodyParser(flag)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -173,7 +140,7 @@ func (ch *CommentHandler) UpdateFlagCount(c *fiber.Ctx) error {
 	}
 
 	flag.FlaggedResource = id
-	flag.FlaggerID = u.Id
+	flag.FlaggerID = currentUserId
 
 	err = ch.CommentService.UpdateFlagCount(flag)
 
@@ -187,14 +154,7 @@ func (ch *CommentHandler) UpdateFlagCount(c *fiber.Ctx) error {
 }
 
 func (ch *CommentHandler) DeleteById(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
+	currentUsername := c.Locals("username").(string)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -202,7 +162,7 @@ func (ch *CommentHandler) DeleteById(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = ch.CommentService.DeleteById(id, u.Username)
+	err = ch.CommentService.DeleteById(id, currentUsername)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
