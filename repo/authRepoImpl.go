@@ -11,7 +11,6 @@ import (
 	"story-app-monolith/config"
 	"story-app-monolith/database"
 	"story-app-monolith/domain"
-	"story-app-monolith/events"
 	"story-app-monolith/util"
 	"strconv"
 	"strings"
@@ -72,20 +71,6 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 			panic(err)
 		}
 		return
-	}()
-
-	go func() {
-		event := new(domain.Event)
-		event.Action = "login"
-		event.Target = username
-		event.ResourceId = user.Id
-		event.ActorUsername = username
-		event.Message = username + " has logged in IP: " + ip + "; IPs: " + strings.Join(ips, ", ")
-		err = events.SendEventMessage(event, 0)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			return
-		}
 	}()
 
 	return userDto, token, nil

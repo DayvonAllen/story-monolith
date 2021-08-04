@@ -14,6 +14,10 @@ import (
 func SetupRoutes(app *fiber.App) {
 	uh := handlers.UserHandler{UserService: services.NewUserService(repo.NewUserRepoImpl())}
 	ah := handlers.AuthHandler{AuthService: services.NewAuthService(repo.NewAuthRepoImpl())}
+	ch := handlers.CommentHandler{CommentService: services.NewCommentService(repo.NewCommentRepoImpl())}
+	sh := handlers.StoryHandler{StoryService: services.NewStoryService(repo.NewStoryRepoImpl())}
+	rh := handlers.ReadLaterHandler{ReadLaterService: services.NewReadLaterService(repo.NewReadLaterRepoImpl())}
+	reh := handlers.ReplyHandler{ReplyService: services.NewReplyService(repo.NewReplyRepoImpl())}
 
 	app.Use(recover.New())
 	api := app.Group("", logger.New())
@@ -42,6 +46,42 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/follow/:username", middleware.IsLoggedIn, uh.FollowUser)
 	user.Put("/unfollow/:username", middleware.IsLoggedIn, uh.UnfollowUser)
 	user.Delete("/delete", middleware.IsLoggedIn, uh.DeleteByID)
+
+	profile := api.Group("/profile")
+	profile.Get("/:username", middleware.IsLoggedIn, uh.GetUserProfile)
+	profile.Get("/", uh.GetCurrentUserProfile)
+
+	stories := api.Group("/stories")
+	stories.Post("/", sh.CreateStory)
+	stories.Put("/:id", sh.UpdateStory)
+	stories.Put("/like/:id", sh.LikeStory)
+	stories.Put("/dislike/:id", sh.DisLikeStory)
+	stories.Put("/flag/:id", sh.UpdateFlagCount)
+	stories.Get("/featured", sh.FeaturedStories)
+	stories.Get("/:id", sh.FindStory)
+	stories.Delete("/:id", sh.DeleteStory)
+	stories.Get("/", middleware.IsLoggedIn, sh.FindAll)
+
+	comments := api.Group("/comment")
+	comments.Post("/:id", ch.CreateCommentOnStory)
+	comments.Put("/like/:id", ch.LikeComment)
+	comments.Put("/dislike/:id", ch.DisLikeComment)
+	comments.Put("/flag/:id", ch.UpdateFlagCount)
+	comments.Put("/:id", ch.UpdateById)
+	comments.Delete("/:id", ch.DeleteById)
+
+	reply := api.Group("/reply")
+	reply.Post("/:id", reh.CreateReply)
+	reply.Put("/like/:id", reh.LikeReply)
+	reply.Put("/dislike/:id", reh.DisLikeReply)
+	reply.Put("/flag/:id", reh.UpdateFlagCount)
+	reply.Put("/:id", reh.UpdateById)
+	reply.Delete("/:id", reh.DeleteById)
+
+	readLater := api.Group("/read")
+	readLater.Post("/:id", rh.Create)
+	readLater.Get("/", rh.GetByUsername)
+	readLater.Delete("/:id", rh.Delete)
 }
 
 func Setup() *fiber.App {

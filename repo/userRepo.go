@@ -27,5 +27,7 @@ type UserRepo interface {
 	UpdateFlagCount(*domain.Flag) error
 	BlockUser(primitive.ObjectID, string, context.Context, string) error
 	UnblockUser(primitive.ObjectID, string, context.Context, string) error
+	GetCurrentUserProfile(string) (*domain.CurrentUserProfile, error)
+	GetUserProfile(string, string) (*domain.ViewUserProfile, error)
 	DeleteByID(primitive.ObjectID, context.Context, string) error
 }

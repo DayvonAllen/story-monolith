@@ -12,9 +12,10 @@ import (
 	"log"
 	"story-app-monolith/database"
 	"story-app-monolith/domain"
-	"story-app-monolith/events"
+	helper "story-app-monolith/helpers"
 	"story-app-monolith/util"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,8 @@ type UserRepoImpl struct {
 	userDto      domain.UserDto
 	userDtoList  []domain.UserDto
 	userResponse domain.UserResponse
+	currentUser domain.CurrentUserProfile
+	viewedUser  domain.ViewUserProfile
 }
 
 func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, username string) (*domain.UserResponse, error) {
@@ -71,6 +74,80 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	u.userResponse = domain.UserResponse{Users: &u.userDtoList, CurrentPage: page}
 
 	return &u.userResponse, nil
+}
+
+func (u UserRepoImpl) GetCurrentUserProfile(username string) (*domain.CurrentUserProfile, error) {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
+
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.currentUser)
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error processing data")
+	}
+
+	stories, err := StoryRepoImpl{}.FindAllByUsername(username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	u.currentUser.Posts = *stories
+
+	return &u.currentUser, nil
+}
+
+func (u UserRepoImpl) GetUserProfile(username, currentUsername string) (*domain.ViewUserProfile, error) {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
+
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.viewedUser)
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error processing data")
+	}
+
+	if u.viewedUser.ProfileIsViewable == false {
+		return nil, fmt.Errorf("cannot view user")
+	}
+
+	if !u.viewedUser.DisplayFollowerCount {
+		u.viewedUser.FollowerCount = -1
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		stories, err := StoryRepoImpl{}.FindAllByUsername(username)
+
+		if err != nil {
+			panic(err)
+		}
+
+		u.viewedUser.Posts = *stories
+
+		return
+	}()
+
+	go func() {
+		defer wg.Done()
+		u.viewedUser.IsFollowing = helper.CurrentUserInteraction(u.viewedUser.Followers, currentUsername)
+		return
+	}()
+
+	wg.Wait()
+
+	return &u.viewedUser, nil
 }
 
 func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID, ctx context.Context, username string) (*[]domain.UserDto, error) {
@@ -131,14 +208,6 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 		if err != nil {
 			return fmt.Errorf("error processing data")
 		}
-
-		go func() {
-			err := events.SendKafkaMessage(user, 201)
-			if err != nil {
-				fmt.Println("Error publishing...")
-				return
-			}
-		}()
 
 		return nil
 	}
@@ -229,15 +298,6 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 
 	u.userDto.ProfileIsViewable = user.ProfileIsViewable
 
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			return
-		}
-	}()
 
 	return nil
 }
@@ -259,15 +319,6 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 
 	u.userDto.AcceptMessages = user.AcceptMessages
 
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -287,15 +338,6 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 	}
 
 	u.userDto.CurrentBadgeUrl = user.CurrentBadgeUrl
-
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
 
 	return nil
 }
@@ -317,15 +359,6 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 
 	u.userDto.ProfilePictureUrl = user.ProfilePictureUrl
 
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -346,15 +379,6 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 
 	u.userDto.ProfileBackgroundPictureUrl = user.ProfileBackgroundPictureUrl
 
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -374,15 +398,6 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 	}
 
 	u.userDto.CurrentTagLine = user.CurrentTagLine
-
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
 
 	return nil
 }
@@ -406,15 +421,6 @@ func (u UserRepoImpl) UpdateDisplayFollowerCount(id primitive.ObjectID, user *do
 
 	u.userDto.DisplayFollowerCount = user.DisplayFollowerCount
 
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -434,15 +440,6 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 	}
 
 	u.userDto.IsVerified = user.IsVerified
-
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	go func() {
-		err := events.HandleKafkaMessage(err, mappedUser, 200)
-		if err != nil {
-			return
-		}
-	}()
 
 	if err != nil {
 		return err
@@ -584,13 +581,6 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, ctx cont
 			return
 		}
 
-		err = events.SendKafkaMessage(user, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			panic(err)
-			return
-		}
-
 		user2 := new(domain.User)
 
 		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(user2)
@@ -600,12 +590,6 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, ctx cont
 			return
 		}
 
-		err = events.SendKafkaMessage(user2, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			panic(err)
-			return
-		}
 		return
 	}()
 
@@ -708,13 +692,6 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, ctx co
 			return
 		}
 
-		err = events.SendKafkaMessage(user, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			panic(err)
-			return
-		}
-
 		user2 := new(domain.User)
 
 		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(user2)
@@ -724,12 +701,6 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, ctx co
 			return
 		}
 
-		err = events.SendKafkaMessage(user2, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			panic(err)
-			return
-		}
 		return
 	}()
 
@@ -813,19 +784,6 @@ func (u UserRepoImpl) FollowUser(username string, currentUser string) error {
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		err := events.HandleKafkaMessage(err, &u.user, 200)
-		if err != nil {
-			return
-		}
-	}()
-	go func() {
-		err := events.HandleKafkaMessage(err, user, 200)
-		if err != nil {
-			return
-		}
-	}()
 
 	return nil
 }
@@ -915,20 +873,6 @@ func (u UserRepoImpl) UnfollowUser(username string, currentUser string) error {
 		return err
 	}
 
-	go func() {
-		err := events.HandleKafkaMessage(err, &u.user, 200)
-		if err != nil {
-			return
-		}
-	}()
-
-	go func() {
-		err := events.HandleKafkaMessage(err, user, 200)
-		if err != nil {
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -943,13 +887,6 @@ func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, ctx context.Context, use
 	}
 
 	u.user.Id = id
-
-	go func() {
-		err := events.HandleKafkaMessage(err, &u.user, 204)
-		if err != nil {
-			return
-		}
-	}()
 
 	return nil
 }

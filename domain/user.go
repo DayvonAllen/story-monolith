@@ -108,13 +108,27 @@ type UserDto struct {
 }
 
 type ViewUserProfile struct {
-	Username                    string               `json:"username"`
-	CurrentTagLine              string               `json:"currentTagLine"`
-	ProfilePictureUrl           string               `json:"profilePictureUrl"`
-	ProfileBackgroundPictureUrl string               `json:"profileBackgroundPictureUrl"`
-	CurrentBadgeUrl             string               `json:"currentBadgeUrl"`
-	FollowerCount               int                  `json:"followerCount"`
-	DisplayFollowerCount        bool                 `json:"displayFollowerCount"`
+	Username                    string     `json:"username"`
+	CurrentTagLine              string     `json:"currentTagLine"`
+	ProfilePictureUrl           string     `json:"profilePictureUrl"`
+	ProfileBackgroundPictureUrl string     `json:"profileBackgroundPictureUrl"`
+	CurrentBadgeUrl             string     `json:"currentBadgeUrl"`
+	FollowerCount               int        `json:"followerCount"`
+	ProfileIsViewable           bool       `json:"-"`
+	DisplayFollowerCount        bool       `json:"displayFollowerCount"`
+	IsFollowing                 bool       `json:"isFollowing"`
+	Posts                       []StoryDto `json:"posts"`
+	Followers                   []string   `json:"-"`
+}
+
+type CurrentUserProfile struct {
+	Username                    string     `json:"username"`
+	CurrentTagLine              string     `json:"currentTagLine"`
+	ProfilePictureUrl           string     `json:"profilePictureUrl"`
+	ProfileBackgroundPictureUrl string     `json:"profileBackgroundPictureUrl"`
+	CurrentBadgeUrl             string     `json:"currentBadgeUrl"`
+	FollowerCount               int        `json:"followerCount"`
+	Posts                       []StoryDto `json:"posts"`
 }
 
 type UserResponse struct {

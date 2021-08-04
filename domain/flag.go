@@ -9,5 +9,6 @@ type Flag struct {
 	Id        primitive.ObjectID `bson:"_id" json:"-"`
 	FlaggerID  primitive.ObjectID `bson:"flaggerID" json:"-"`
 	FlaggedUsername string `bson:"flaggedUsername" json:"-"`
+	FlaggedResource primitive.ObjectID `bson:"flaggedResource" json:"-"`
 	Reason  string             `bson:"reason" json:"reason"`
 }

@@ -31,6 +31,8 @@ type UserService interface {
 	UnfollowUser(username string, currentUser string) error
 	BlockUser(primitive.ObjectID, string, context.Context, string) error
 	UnblockUser(primitive.ObjectID, string, context.Context, string) error
+	GetCurrentUserProfile(string) (*domain.CurrentUserProfile, error)
+	GetUserProfile(string, string) (*domain.ViewUserProfile, error)
 	DeleteByID(primitive.ObjectID, context.Context, string) error
 }
 
@@ -45,6 +47,21 @@ func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx 
 		return nil, err
 	}
 	return  u, nil
+}
+func (s DefaultUserService) GetCurrentUserProfile(username string) (*domain.CurrentUserProfile, error) {
+	currentUser, err := s.repo.GetCurrentUserProfile(username)
+	if err != nil {
+		return nil, err
+	}
+	return currentUser, nil
+}
+
+func (s DefaultUserService) GetUserProfile(username, currentUsername string) (*domain.ViewUserProfile, error) {
+	currentUser, err := s.repo.GetUserProfile(username, currentUsername)
+	if err != nil {
+		return nil, err
+	}
+	return currentUser, nil
 }
 
 func (s DefaultUserService) GetAllBlockedUsers(id primitive.ObjectID, ctx context.Context, username string) (*[]domain.UserDto, error) {
