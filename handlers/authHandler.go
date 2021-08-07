@@ -22,9 +22,17 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	if len(details.Email) <= 1 {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("invalid username")})
+	}
+
+	if len(details.Password) <= 5 {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("invalid password")})
+	}
+
 	var auth domain.Authentication
 
-	_, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password, c.IP(), c.IPs())
+	_, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password)
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {

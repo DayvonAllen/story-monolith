@@ -72,7 +72,6 @@ type StoryDto struct {
 type FeaturedStoryDto struct {
 	Id             primitive.ObjectID `bson:"_id" json:"id"`
 	Title          string             `json:"title"`
-	Content        string             `json:"content"`
 	AuthorUsername string             `json:"authorUsername"`
 	Preview        string             `json:"preview"`
 	LikeCount      int                `json:"likes"`

@@ -21,7 +21,7 @@ type AuthRepoImpl struct {
 	*domain.User
 }
 
-func(a AuthRepoImpl) Login(username string, password string, ip string, ips []string) (*domain.UserDto, string, error) {
+func(a AuthRepoImpl) Login(username string, password string) (*domain.UserDto, string, error) {
 	var login domain.Authentication
 	var user domain.User
 
@@ -58,19 +58,6 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 	}
 
 	userDto := domain.UserMapper(&user)
-
-	go func() {
-		filter := bson.D{{"username", username}}
-		update := bson.D{{"$set", bson.D{{"lastLoginIp", ip}, {"lastLoginIps", ips}}}}
-
-		_, err := conn.UserCollection.UpdateOne(context.TODO(),
-			filter, update)
-
-		if err != nil {
-			panic(err)
-		}
-		return
-	}()
 
 	return userDto, token, nil
 }

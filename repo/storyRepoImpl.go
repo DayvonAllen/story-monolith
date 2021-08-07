@@ -134,6 +134,7 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.Story
 		} else {
 			s.StoryPreviewList.NumberOfPages = int(count / 10) + 1
 		}
+		return
 	}(conn)
 
 	wg.Wait()
