@@ -11,6 +11,7 @@ import (
 
 func init() {
 	database.ConnectToDB()
+	database.ConnectToRedis()
 }
 func main() {
 	app := router.Setup()

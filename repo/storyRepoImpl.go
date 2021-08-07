@@ -25,12 +25,20 @@ type StoryRepoImpl struct {
 	FeaturedStoryList []domain.FeaturedStoryDto
 	StoryList         []domain.Story
 	StoryDtoList      []domain.StoryDto
+	StoryPreviews      []domain.StoryPreviewDto
+	StoryPreviewList      domain.StoryList
 }
 
 func (s StoryRepoImpl) Create(story *domain.CreateStoryDto) error {
 	conn := database.MongoConn
 
 	story.Id = primitive.NewObjectID()
+
+	if len(story.Content) > 160 {
+		story.Preview = string([]rune(story.Content)[:161]) + "..."
+	} else {
+		story.Preview = story.Content
+	}
 
 	_, err := conn.StoryCollection.InsertOne(context.TODO(), &story)
 
@@ -75,7 +83,7 @@ func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newT
 	return nil
 }
 
-func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*[]domain.Story, error) {
+func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.StoryList, error) {
 	conn := database.MongoConn
 
 	findOptions := options.FindOptions{}
@@ -91,6 +99,47 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*[]domain.Sto
 	if newStoriesQuery {
 		findOptions.SetSort(bson.D{{"createdAt", -1}})
 	}
+
+	query := bson.M{}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func(conn *database.Connection) {
+		defer wg.Done()
+		cur, err := conn.StoryCollection.Find(context.TODO(), query, &findOptions)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if err = cur.All(context.TODO(), &s.StoryPreviews); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}(conn)
+
+	go func(conn *database.Connection) {
+		defer wg.Done()
+		count, err:= conn.StoryCollection.CountDocuments(context.TODO(),query)
+
+		if err != nil {
+			panic(err)
+		}
+
+		s.StoryPreviewList.NumberOfStories = count
+
+		if s.StoryPreviewList.NumberOfStories < 10 {
+			s.StoryPreviewList.NumberOfPages = 1
+		} else {
+			s.StoryPreviewList.NumberOfPages = int(count / 10) + 1
+		}
+	}(conn)
+
+	wg.Wait()
+
+	s.StoryPreviewList.Stories = s.StoryPreviews
+	s.StoryPreviewList.CurrentPage = 1
 
 	cur, err := conn.StoryCollection.Find(context.TODO(), bson.M{}, &findOptions)
 
@@ -109,7 +158,7 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*[]domain.Sto
 		return nil, fmt.Errorf("error processing data")
 	}
 
-	return &s.StoryList, nil
+	return &s.StoryPreviewList, nil
 }
 
 func (s StoryRepoImpl) FindAllByUsername(username string) (*[]domain.StoryDto, error) {
@@ -141,7 +190,7 @@ func (s StoryRepoImpl) FeaturedStories() (*[]domain.FeaturedStoryDto, error) {
 
 	findOptions := options.FindOptions{}
 
-	findOptions.SetLimit(10)
+	findOptions.SetLimit(3)
 	findOptions.SetSort(bson.D{{"score", -1}})
 
 	cur, err := conn.StoryCollection.Find(context.TODO(), bson.M{}, &findOptions)

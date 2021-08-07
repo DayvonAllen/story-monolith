@@ -25,6 +25,29 @@ type Story struct {
 	UpdatedDate    string             `bson:"updatedDate" json:"updatedDate"`
 }
 
+type StoryList struct {
+	Stories []StoryPreviewDto `json:"stories"`
+	NumberOfStories int64		`json:"numberOfStories"`
+	CurrentPage int			`json:"currentPage"`
+	NumberOfPages int		`json:"numberOfPages"`
+}
+
+type StoryPreviewDto struct {
+	Id                  primitive.ObjectID `bson:"_id" json:"id"`
+	Title               string             `json:"title"`
+	AuthorUsername      string             `json:"authorUsername"`
+	Preview             string             `json:"preview"`
+	LikeCount           int                `json:"likes"`
+	DislikeCount        int                `json:"dislikes"`
+	Tags                []Tag              `json:"tags"`
+	CommentCount           int      `json:"commentCount"`
+	CurrentUserLiked    bool               `json:"currentUserLiked"`
+	CurrentUserDisLiked bool               `json:"currentUserDisLiked"`
+	Updated             bool               `json:"updated"`
+	CreatedAt           time.Time          `json:"createdAt"`
+	UpdatedAt           time.Time          `json:"updatedAt"`
+}
+
 type StoryDto struct {
 	Id                  primitive.ObjectID `bson:"_id" json:"id"`
 	Title               string             `json:"title"`

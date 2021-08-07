@@ -56,7 +56,7 @@ func SetupRoutes(app *fiber.App) {
 	stories.Post("/", middleware.IsLoggedIn, sh.CreateStory)
 	stories.Put("/:id", middleware.IsLoggedIn, sh.UpdateStory)
 	stories.Put("/like/:id", middleware.IsLoggedIn, sh.LikeStory)
-	stories.Put("/dislike/:id", middleware.IsLoggedIn, sh.DisLikeStory)
+	//stories.Put("/dislike/:id", middleware.IsLoggedIn, sh.DisLikeStory)
 	stories.Put("/flag/:id", middleware.IsLoggedIn, sh.UpdateFlagCount)
 	stories.Get("/featured", sh.FeaturedStories)
 	stories.Get("/:id", middleware.IsLoggedIn, sh.FindStory)
