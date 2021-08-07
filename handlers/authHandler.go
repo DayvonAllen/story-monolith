@@ -7,7 +7,6 @@ import (
 	"story-app-monolith/domain"
 	"story-app-monolith/services"
 	"strings"
-	"time"
 )
 
 type AuthHandler struct {
@@ -25,7 +24,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 
-	user, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password, c.IP(), c.IPs())
+	_, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password, c.IP(), c.IPs())
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
@@ -44,27 +43,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	signedToken = append(signedToken, t...)
 
-	c.Cookie(&fiber.Cookie{
-		Name: "Authentication",
-		Value: string(signedToken),
-		Secure: false,
-		Expires: time.Now().Add(time.Hour),
-		HTTPOnly: true,
-	})
-
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
-}
-
-func (ah *AuthHandler) Logout(c *fiber.Ctx) error {
-	c.Cookie(&fiber.Cookie{
-		Name: "Authentication",
-		Value: "",
-		Secure: false,
-		Expires: time.Now().Add(-time.Hour),
-		HTTPOnly: true,
-	})
-
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": string(signedToken)})
 }
 
 func (ah *AuthHandler) ResetPasswordQuery(c *fiber.Ctx) error {

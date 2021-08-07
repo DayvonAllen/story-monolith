@@ -18,7 +18,7 @@ func SetupRoutes(app *fiber.App) {
 	sh := handlers.StoryHandler{StoryService: services.NewStoryService(repo.NewStoryRepoImpl())}
 	rh := handlers.ReadLaterHandler{ReadLaterService: services.NewReadLaterService(repo.NewReadLaterRepoImpl())}
 	reh := handlers.ReplyHandler{ReplyService: services.NewReplyService(repo.NewReplyRepoImpl())}
-	mh := handlers.MessageHandler{MessageService: services.NewMessageService(repo.NewMessageRepoImpl())}
+	//mh := handlers.MessageHandler{MessageService: services.NewMessageService(repo.NewMessageRepoImpl())}
 	conh := handlers.ConversationHandler{ConversationService: services.NewConversationService(repo.NewConversationRepoImpl())}
 
 	app.Use(recover.New())
@@ -26,7 +26,6 @@ func SetupRoutes(app *fiber.App) {
 
 	auth := api.Group("/auth")
 	auth.Post("/login", ah.Login)
-	auth.Post("/logout", ah.Logout)
 	auth.Post("/reset", ah.ResetPasswordQuery)
 	auth.Put("/reset/:token", ah.ResetPassword)
 	auth.Get("/account/:code", ah.VerifyCode)
@@ -85,10 +84,10 @@ func SetupRoutes(app *fiber.App) {
 	readLater.Get("/", middleware.IsLoggedIn, rh.GetByUsername)
 	readLater.Delete("/:id", middleware.IsLoggedIn, rh.Delete)
 
-	messages := api.Group("/messages")
-	messages.Post("/", middleware.IsLoggedIn, mh.CreateMessage)
-	messages.Delete("/multi", middleware.IsLoggedIn, mh.DeleteByIDs)
-	messages.Delete("/", middleware.IsLoggedIn, mh.DeleteByID)
+	//messages := api.Group("/messages")
+	//messages.Post("/", middleware.IsLoggedIn, mh.CreateMessage)
+	//messages.Delete("/multi", middleware.IsLoggedIn, mh.DeleteByIDs)
+	//messages.Delete("/", middleware.IsLoggedIn, mh.DeleteByID)
 
 	conversations := api.Group("/conversation")
 	conversations.Get("/:username", middleware.IsLoggedIn, conh.FindConversation)

@@ -366,8 +366,7 @@ func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
 	username := c.Params("username")
 	currentUsername := c.Locals("username").(string)
 	currentUserId := c.Locals("id").(primitive.ObjectID)
-
-
+	
 	err := uh.UserService.UnblockUser(currentUserId, strings.ToLower(username), c.Context(), currentUsername)
 
 	if err != nil {
