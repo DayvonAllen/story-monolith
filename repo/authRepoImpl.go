@@ -65,6 +65,7 @@ func(a AuthRepoImpl) Login(username string, password string) (*domain.UserDto, s
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 	conn := database.MongoConn
 
+
 	var user domain.User
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
 

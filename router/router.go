@@ -20,6 +20,7 @@ func SetupRoutes(app *fiber.App) {
 	reh := handlers.ReplyHandler{ReplyService: services.NewReplyService(repo.NewReplyRepoImpl())}
 	//mh := handlers.MessageHandler{MessageService: services.NewMessageService(repo.NewMessageRepoImpl())}
 	conh := handlers.ConversationHandler{ConversationService: services.NewConversationService(repo.NewConversationRepoImpl())}
+	nh := handlers.NotificationHandler{NotificationService: services.NewNotificationService(repo.NewNotificationRepoImpl())}
 
 	app.Use(recover.New())
 	api := app.Group("", logger.New())
@@ -92,6 +93,9 @@ func SetupRoutes(app *fiber.App) {
 	conversations := api.Group("/conversation")
 	conversations.Get("/:username", middleware.IsLoggedIn, conh.FindConversation)
 	conversations.Get("/", middleware.IsLoggedIn, conh.GetConversationPreviews)
+
+	notifications := api.Group("/notifications")
+	notifications.Get("/", middleware.IsLoggedIn, nh.GetAllUnreadNotificationByUsername)
 }
 
 func Setup() *fiber.App {

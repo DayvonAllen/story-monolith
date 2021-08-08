@@ -18,6 +18,7 @@ type Connection struct {
 	RepliesCollection      *mongo.Collection
 	ConversationCollection *mongo.Collection
 	MessageCollection      *mongo.Collection
+	NotificationCollection      *mongo.Collection
 	*mongo.Database
 }
 
@@ -48,10 +49,12 @@ func ConnectToDB() {
 	readLaterCollection := db.Collection("readLater")
 	conversationCollection := db.Collection("conversation")
 	messageCollection := db.Collection("message")
+	notificationCollection := db.Collection("notification")
 
 	dbConnection := &Connection{client, userCollection, flagCollection, storiesCollection,
 		commentsCollection, repliesCollection, readLaterCollection,
-		conversationCollection, messageCollection, db}
+		conversationCollection, messageCollection, notificationCollection,
+		db}
 
 	MongoConn = dbConnection
 }
