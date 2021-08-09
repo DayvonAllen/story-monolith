@@ -17,7 +17,7 @@ type Story struct {
 	LikeCount      int                `bson:"likeCount" json:"likeCount"`
 	DislikeCount   int                `bson:"dislikeCount" json:"dislikeCount"`
 	Score          int                `bson:"score" json:"-"`
-	Tags           []Tag              `bson:"tags" json:"tags"`
+	Tag           Tag              `bson:"tag" json:"tag"`
 	Updated        bool               `bson:"updated" json:"updated"`
 	CreatedAt      time.Time          `bson:"createdAt" json:"-"`
 	UpdatedAt      time.Time          `bson:"updatedAt" json:"-"`
@@ -39,7 +39,7 @@ type StoryPreviewDto struct {
 	Preview             string             `json:"preview"`
 	LikeCount           int                `json:"likes"`
 	DislikeCount        int                `json:"dislikes"`
-	Tags                []Tag              `json:"tags"`
+	Tag                Tag              `json:"tag"`
 	CommentCount           int      `json:"commentCount"`
 	CurrentUserLiked    bool               `json:"currentUserLiked"`
 	CurrentUserDisLiked bool               `json:"currentUserDisLiked"`
@@ -58,7 +58,7 @@ type StoryDto struct {
 	Dislikes            []string           `bson:"dislikes" json:"-"`
 	LikeCount           int                `json:"likes"`
 	DislikeCount        int                `json:"dislikes"`
-	Tags                []Tag              `json:"tags"`
+	Tag                Tag              `json:"tag"`
 	Comments            *[]CommentDto      `json:"comments"`
 	CurrentUserLiked    bool               `json:"currentUserLiked"`
 	CurrentUserDisLiked bool               `json:"currentUserDisLiked"`
@@ -76,7 +76,7 @@ type FeaturedStoryDto struct {
 	Preview        string             `json:"preview"`
 	LikeCount      int                `json:"likes"`
 	DislikeCount   int                `json:"dislikes"`
-	Tags           []Tag              `json:"tags"`
+	Tag           Tag              `json:"tag"`
 	Updated        bool               `json:"updated"`
 	CreatedAt      time.Time          `json:"createdAt"`
 	UpdatedAt      time.Time          `json:"updatedAt"`
@@ -92,7 +92,7 @@ type CreateStoryDto struct {
 	Preview        string    `bson:"preview" json:"-"`
 	Likes          []string  `bson:"likes" json:"-"`
 	Dislikes       []string  `bson:"dislikes" json:"-"`
-	Tags           []Tag     `json:"tags"`
+	Tag           Tag     `json:"tag"`
 	Updated        bool      `bson:"updated" json:"-"`
 	CreatedAt      time.Time `bson:"createdAt" json:"-"`
 	UpdatedAt      time.Time `bson:"updatedAt" json:"-"`
@@ -105,7 +105,7 @@ type UpdateStoryDto struct {
 	Title       string    `bson:"title" json:"title"`
 	Content     string    `bson:"content" json:"content"`
 	Preview     string    `bson:"preview" json:"-"`
-	Tags        []Tag     `json:"tags"`
+	Tag        Tag     `json:"tag"`
 	Updated     bool      `bson:"updated" json:"-"`
 	UpdatedAt   time.Time `bson:"updatedAt" json:"-"`
 	UpdatedDate string    `bson:"updatedDate" json:"-"`

@@ -12,18 +12,21 @@ type Tag struct {
 	CampFire       bool   `bson:"-" json:"-"`
 	Paranormal     bool   `bson:"-" json:"-"`
 	GhostStory     bool   `bson:"-" json:"-"`
+	Drama     bool   `bson:"-" json:"-"`
+	Suspense     bool   `bson:"-" json:"-"`
+	Romance     bool   `bson:"-" json:"-"`
 	Other          bool   `bson:"-" json:"-"`
 }
 
 func (t Tag) ValidateTag(tagValidator *Tag) error {
 	switch tag := strings.ToLower(t.Value); tag {
-	case "creepypasta":
+	case "creepy pasta":
 		if !tagValidator.CreepyPasta {
 			tagValidator.CreepyPasta = true
 			return nil
 		}
 		return fmt.Errorf("no duplicate tags")
-	case "truescarystory":
+	case "true scary story":
 		if !tagValidator.TrueScaryStory {
 			tagValidator.TrueScaryStory = true
 			return nil
@@ -35,7 +38,7 @@ func (t Tag) ValidateTag(tagValidator *Tag) error {
 			return nil
 		}
 		return fmt.Errorf("no duplicate tags")
-	case "ghoststory":
+	case "ghost story":
 		if !tagValidator.GhostStory {
 			tagValidator.GhostStory = true
 			return nil
@@ -48,6 +51,24 @@ func (t Tag) ValidateTag(tagValidator *Tag) error {
 		}
 		return fmt.Errorf("no duplicate tags")
 	case "other":
+		if !tagValidator.Other {
+			tagValidator.Other = true
+			return nil
+		}
+		return fmt.Errorf("no duplicate tags")
+	case "romance":
+		if !tagValidator.Other {
+			tagValidator.Other = true
+			return nil
+		}
+		return fmt.Errorf("no duplicate tags")
+	case "drama":
+		if !tagValidator.Other {
+			tagValidator.Other = true
+			return nil
+		}
+		return fmt.Errorf("no duplicate tags")
+	case "suspense":
 		if !tagValidator.Other {
 			tagValidator.Other = true
 			return nil

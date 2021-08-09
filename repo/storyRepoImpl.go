@@ -46,16 +46,10 @@ func (s StoryRepoImpl) Create(story *domain.CreateStoryDto) error {
 		return fmt.Errorf("error processing data")
 	}
 
-	newStory := new(domain.Story)
-
-	newStory.Id = story.Id
-	newStory.Title = story.Title
-	newStory.AuthorUsername = story.AuthorUsername
-
 	return nil
 }
 
-func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newTitle string, username string, tags *[]domain.Tag, updated bool) error {
+func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newTitle string, username string, tag *domain.Tag, updated bool) error {
 	conn := database.MongoConn
 
 	filter := bson.D{{"_id", id}, {"authorUsername", username}}
@@ -63,7 +57,7 @@ func (s StoryRepoImpl) UpdateById(id primitive.ObjectID, newContent string, newT
 		bson.D{{"content", newContent},
 			{"title", newTitle},
 			{"updatedAt", time.Now()},
-			{"tags", tags},
+			{"tag", tag},
 			{"updated", updated},
 		},
 	}}

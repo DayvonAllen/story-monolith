@@ -24,6 +24,10 @@ func (s *StoryHandler) CreateStory(c *fiber.Ctx) error {
 
 	err := c.BodyParser(storyDto)
 
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
 	storyDto.AuthorUsername = currentUsername
 	storyDto.CreatedAt = time.Now()
 	storyDto.UpdatedAt = time.Now()
@@ -32,19 +36,7 @@ func (s *StoryHandler) CreateStory(c *fiber.Ctx) error {
 	storyDto.CreatedDate = storyDto.CreatedAt.Format("January 2, 2006")
 	storyDto.UpdatedDate = storyDto.UpdatedAt.Format("January 2, 2006")
 
-	tagLength := len(storyDto.Tags)
-
-	if tagLength < 1 {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("story must have at least one tag")})
-	}
-
-	t := new(domain.Tag)
-	for _, tag := range storyDto.Tags {
-		err = tag.ValidateTag(t)
-		if err != nil {
-			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-		}
-	}
+	err = storyDto.Tag.ValidateTag(&storyDto.Tag)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -112,21 +104,13 @@ func (s *StoryHandler) UpdateStory(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	tagLength := len(storyDto.Tags)
+	err = storyDto.Tag.ValidateTag(&storyDto.Tag)
 
-	if tagLength < 1 {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("story must have at least one tag")})
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	t := new(domain.Tag)
-	for _, tag := range storyDto.Tags {
-		err = tag.ValidateTag(t)
-		if err != nil {
-			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-		}
-	}
-
-	err = s.StoryService.UpdateById(id, storyDto.Content, storyDto.Title, currentUsername, &storyDto.Tags, storyDto.Updated)
+	err = s.StoryService.UpdateById(id, storyDto.Content, storyDto.Title, currentUsername, &storyDto.Tag, storyDto.Updated)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

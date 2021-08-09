@@ -7,7 +7,7 @@ import (
 
 type StoryRepo interface {
 	Create(story *domain.CreateStoryDto) error
-	UpdateById(primitive.ObjectID, string, string, string, *[]domain.Tag, bool) error
+	UpdateById(primitive.ObjectID, string, string, string, *domain.Tag, bool) error
 	FindAll(string, bool) (*domain.StoryList, error)
 	FindAllByUsername(string) (*[]domain.StoryDto, error)
 	FeaturedStories() (*[]domain.FeaturedStoryDto, error)
