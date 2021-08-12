@@ -96,7 +96,7 @@ func (r ReadLaterRepoImpl) GetByUsername(username string, page string) (*domain.
 
 	go func(conn *database.Connection) {
 		defer wg.Done()
-		count, err := conn.StoryCollection.CountDocuments(context.TODO(), query)
+		count, err := conn.ReadLaterCollection.CountDocuments(context.TODO(), query)
 
 		if err != nil {
 			panic(err)
