@@ -135,13 +135,7 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.Story
 
 	s.StoryPreviewList.Stories = s.StoryPreviews
 
-	newPage, err := strconv.Atoi(page)
-
-	if err != nil {
-		return nil, err
-	}
-
-	s.StoryPreviewList.CurrentPage = newPage
+	s.StoryPreviewList.CurrentPage = pageNumber
 
 	cur, err := conn.StoryCollection.Find(context.TODO(), bson.M{}, &findOptions)
 

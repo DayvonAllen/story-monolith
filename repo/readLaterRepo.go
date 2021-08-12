@@ -7,6 +7,6 @@ import (
 
 type ReadLaterRepo interface {
 	Create(username string, storyId primitive.ObjectID) error
-	GetByUsername(username string) (*domain.ReadLaterDto, error)
+	GetByUsername(username string, page string) (*domain.ReadLaterDto, error)
 	Delete(id primitive.ObjectID, username string) error
 }

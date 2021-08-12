@@ -6,16 +6,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"story-app-monolith/database"
 	"story-app-monolith/domain"
+	"strconv"
+	"sync"
 	"time"
 )
 
 type ReadLaterRepoImpl struct {
-	ReadLater             domain.ReadLater
-	ReadLaterList             []domain.ReadLater
-	ReadLaterDto          domain.ReadLaterDto
+	ReadLater     domain.ReadLater
+	ReadLaterList []domain.ReadLater
+	ReadLaterDto  domain.ReadLaterDto
 }
 
 func (r ReadLaterRepoImpl) Create(username string, storyId primitive.ObjectID) error {
@@ -52,27 +55,69 @@ func (r ReadLaterRepoImpl) Create(username string, storyId primitive.ObjectID) e
 	return fmt.Errorf("you already added this story to your read later list")
 }
 
-func (r ReadLaterRepoImpl) GetByUsername(username string) (*domain.ReadLaterDto, error) {
+func (r ReadLaterRepoImpl) GetByUsername(username string, page string) (*domain.ReadLaterDto, error) {
 	conn := database.MongoConn
 
-	cur, err := conn.ReadLaterCollection.Find(context.TODO(), bson.D{{"username", username}})
+	findOptions := options.FindOptions{}
+	perPage := 10
+	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("page must be a number")
 	}
+	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
+	findOptions.SetLimit(int64(perPage))
 
-	if err = cur.All(context.TODO(), &r.ReadLaterList); err != nil {
-		log.Fatal(err)
-	}
+	query := bson.D{{"username", username}}
 
-	// Close the cursor once finished
-	err = cur.Close(context.TODO())
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	if err != nil {
-		return nil, fmt.Errorf("error processing data")
-	}
+	go func(conn *database.Connection) {
+		defer wg.Done()
+		cur, err := conn.ReadLaterCollection.Find(context.TODO(), query)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if err = cur.All(context.TODO(), &r.ReadLaterList); err != nil {
+			log.Fatal(err)
+		}
+
+		err = cur.Close(context.TODO())
+
+		if err != nil {
+			log.Fatal("error processing data")
+		}
+
+		return
+	}(conn)
+
+	go func(conn *database.Connection) {
+		defer wg.Done()
+		count, err := conn.StoryCollection.CountDocuments(context.TODO(), query)
+
+		if err != nil {
+			panic(err)
+		}
+
+		r.ReadLaterDto.NumberOfStories = count
+
+		if r.ReadLaterDto.NumberOfStories < 10 {
+			r.ReadLaterDto.NumberOfPages = 1
+		} else {
+			r.ReadLaterDto.NumberOfPages = int(count/10) + 1
+		}
+
+		return
+	}(conn)
+
+	wg.Wait()
 
 	r.ReadLaterDto.ReadLaterItems = r.ReadLaterList
+
+	r.ReadLaterDto.CurrentPage = pageNumber
 
 	return &r.ReadLaterDto, nil
 }
@@ -98,4 +143,3 @@ func NewReadLaterRepoImpl() ReadLaterRepoImpl {
 
 	return readLaterRepoImpl
 }
-

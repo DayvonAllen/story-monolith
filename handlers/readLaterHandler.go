@@ -30,9 +30,10 @@ func (r *ReadLaterHandler) Create(c *fiber.Ctx) error {
 }
 
 func (r *ReadLaterHandler) GetByUsername(c *fiber.Ctx) error {
+	page := c.Query("page", "1")
 	currentUsername := c.Locals("username").(string)
 
-	items, err := r.ReadLaterService.GetByUsername(currentUsername)
+	items, err := r.ReadLaterService.GetByUsername(currentUsername, page)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

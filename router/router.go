@@ -49,9 +49,9 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/unfollow/:username", middleware.IsLoggedIn, uh.UnfollowUser)
 	user.Delete("/delete", middleware.IsLoggedIn, uh.DeleteByID)
 
-	profile := api.Group("/profile")
-	profile.Get("/:username", middleware.IsLoggedIn, uh.GetUserProfile)
-	profile.Get("/", middleware.IsLoggedIn, uh.GetCurrentUserProfile)
+	//profile := api.Group("/profile")
+	//profile.Get("/:username", middleware.IsLoggedIn, uh.GetUserProfile)
+	//profile.Get("/", middleware.IsLoggedIn, uh.GetCurrentUserProfile)
 
 	stories := api.Group("/stories")
 	stories.Post("/", middleware.IsLoggedIn, sh.CreateStory)

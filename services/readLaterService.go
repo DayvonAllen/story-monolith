@@ -8,7 +8,7 @@ import (
 
 type ReadLaterService interface {
 	Create(username string, storyId primitive.ObjectID) error
-	GetByUsername(username string) (*domain.ReadLaterDto, error)
+	GetByUsername(username string, page string) (*domain.ReadLaterDto, error)
 	Delete(id primitive.ObjectID, username string) error
 }
 
@@ -24,8 +24,8 @@ func (s DefaultReadLaterService) Create(username string, storyId primitive.Objec
 	return nil
 }
 
-func (s DefaultReadLaterService) GetByUsername(username string) (*domain.ReadLaterDto, error) {
-	readLaterItems, err := s.repo.GetByUsername(username)
+func (s DefaultReadLaterService) GetByUsername(username string, page string) (*domain.ReadLaterDto, error) {
+	readLaterItems, err := s.repo.GetByUsername(username, page)
 	if err != nil {
 		return nil, err
 	}

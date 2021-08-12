@@ -15,4 +15,7 @@ type ReadLater struct {
 
 type ReadLaterDto struct {
 	ReadLaterItems  []ReadLater `json:"readLaterItems"`
+	NumberOfStories int64		`json:"numberOfStories"`
+	CurrentPage int			`json:"currentPage"`
+	NumberOfPages int		`json:"numberOfPages"`
 }
