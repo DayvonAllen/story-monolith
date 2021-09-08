@@ -127,8 +127,9 @@ func (s *StoryHandler) FindStory(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
+	userIp := c.IP()
 
-	story, err := s.StoryService.FindById(id, currentUsername)
+	story, err := s.StoryService.FindById(id, currentUsername, userIp)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

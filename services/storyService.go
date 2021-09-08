@@ -13,7 +13,7 @@ type StoryService interface {
 	FeaturedStories() (*[]domain.FeaturedStoryDto, error)
 	LikeStoryById(primitive.ObjectID, string) error
 	DisLikeStoryById(primitive.ObjectID, string) error
-	FindById(primitive.ObjectID, string) (*domain.StoryDto, error)
+	FindById(primitive.ObjectID, string, string) (*domain.StoryDto, error)
 	UpdateFlagCount(flag *domain.Flag) error
 	DeleteById(primitive.ObjectID, string) error
 }
@@ -54,8 +54,8 @@ func (s DefaultStoryService) FeaturedStories() (*[]domain.FeaturedStoryDto, erro
 	return story, nil
 }
 
-func (s DefaultStoryService) FindById(id primitive.ObjectID, username string) (*domain.StoryDto, error) {
-	story, err := s.repo.FindById(id, username)
+func (s DefaultStoryService) FindById(id primitive.ObjectID, username string, userIp string) (*domain.StoryDto, error) {
+	story, err := s.repo.FindById(id, username, userIp)
 	if err != nil {
 		return nil, err
 	}

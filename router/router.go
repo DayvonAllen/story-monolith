@@ -19,7 +19,7 @@ func SetupRoutes(app *fiber.App) {
 	rh := handlers.ReadLaterHandler{ReadLaterService: services.NewReadLaterService(repo.NewReadLaterRepoImpl())}
 	reh := handlers.ReplyHandler{ReplyService: services.NewReplyService(repo.NewReplyRepoImpl())}
 	//mh := handlers.MessageHandler{MessageService: services.NewMessageService(repo.NewMessageRepoImpl())}
-	conh := handlers.ConversationHandler{ConversationService: services.NewConversationService(repo.NewConversationRepoImpl())}
+	//conh := handlers.ConversationHandler{ConversationService: services.NewConversationService(repo.NewConversationRepoImpl())}
 	nh := handlers.NotificationHandler{NotificationService: services.NewNotificationService(repo.NewNotificationRepoImpl())}
 
 	app.Use(recover.New())
@@ -36,17 +36,17 @@ func SetupRoutes(app *fiber.App) {
 	user.Get("/blocked", middleware.IsLoggedIn, uh.GetAllBlockedUsers)
 	user.Post("flag/:username", middleware.IsLoggedIn, uh.UpdateFlagCount)
 	user.Post("/", uh.CreateUser)
-	user.Put("/profile-visibility", middleware.IsLoggedIn, uh.UpdateProfileVisibility)
-	user.Put("/follower-count", middleware.IsLoggedIn, uh.UpdateDisplayFollowerCount)
-	user.Put("/message-acceptance", middleware.IsLoggedIn, uh.UpdateMessageAcceptance)
-	user.Put("/current-badge", middleware.IsLoggedIn, uh.UpdateCurrentBadge)
+	//user.Put("/profile-visibility", middleware.IsLoggedIn, uh.UpdateProfileVisibility)
+	//user.Put("/follower-count", middleware.IsLoggedIn, uh.UpdateDisplayFollowerCount)
+	//user.Put("/message-acceptance", middleware.IsLoggedIn, uh.UpdateMessageAcceptance)
+	//user.Put("/current-badge", middleware.IsLoggedIn, uh.UpdateCurrentBadge)
 	user.Put("/profile-photo", middleware.IsLoggedIn, uh.UpdateProfilePicture)
-	user.Put("/background-photo", middleware.IsLoggedIn, uh.UpdateProfileBackgroundPicture)
-	user.Put("/current-tagline", middleware.IsLoggedIn, uh.UpdateCurrentTagline)
+	//user.Put("/background-photo", middleware.IsLoggedIn, uh.UpdateProfileBackgroundPicture)
+	//user.Put("/current-tagline", middleware.IsLoggedIn, uh.UpdateCurrentTagline)
 	user.Put("/block/:username", middleware.IsLoggedIn, uh.BlockUser)
 	user.Put("/unblock/:username", middleware.IsLoggedIn, uh.UnblockUser)
-	user.Put("/follow/:username", middleware.IsLoggedIn, uh.FollowUser)
-	user.Put("/unfollow/:username", middleware.IsLoggedIn, uh.UnfollowUser)
+	//user.Put("/follow/:username", middleware.IsLoggedIn, uh.FollowUser)
+	//user.Put("/unfollow/:username", middleware.IsLoggedIn, uh.UnfollowUser)
 	user.Delete("/delete", middleware.IsLoggedIn, uh.DeleteByID)
 
 	//profile := api.Group("/profile")
@@ -90,9 +90,9 @@ func SetupRoutes(app *fiber.App) {
 	//messages.Delete("/multi", middleware.IsLoggedIn, mh.DeleteByIDs)
 	//messages.Delete("/", middleware.IsLoggedIn, mh.DeleteByID)
 
-	conversations := api.Group("/conversation")
-	conversations.Get("/:username", middleware.IsLoggedIn, conh.FindConversation)
-	conversations.Get("/", middleware.IsLoggedIn, conh.GetConversationPreviews)
+	//conversations := api.Group("/conversation")
+	//conversations.Get("/:username", middleware.IsLoggedIn, conh.FindConversation)
+	//conversations.Get("/", middleware.IsLoggedIn, conh.GetConversationPreviews)
 
 	notifications := api.Group("/notifications")
 	notifications.Get("/", middleware.IsLoggedIn, nh.GetAllUnreadNotificationByUsername)

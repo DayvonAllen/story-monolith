@@ -25,8 +25,8 @@ type StoryRepoImpl struct {
 	FeaturedStoryList []domain.FeaturedStoryDto
 	StoryList         []domain.Story
 	StoryDtoList      []domain.StoryDto
-	StoryPreviews      []domain.StoryPreviewDto
-	StoryPreviewList      domain.StoryList
+	StoryPreviews     []domain.StoryPreviewDto
+	StoryPreviewList  domain.StoryList
 }
 
 func (s StoryRepoImpl) Create(story *domain.CreateStoryDto) error {
@@ -115,7 +115,7 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.Story
 
 	go func(conn *database.Connection) {
 		defer wg.Done()
-		count, err:= conn.StoryCollection.CountDocuments(context.TODO(),query)
+		count, err := conn.StoryCollection.CountDocuments(context.TODO(), query)
 
 		if err != nil {
 			panic(err)
@@ -126,7 +126,7 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.Story
 		if s.StoryPreviewList.NumberOfStories < 10 {
 			s.StoryPreviewList.NumberOfPages = 1
 		} else {
-			s.StoryPreviewList.NumberOfPages = int(count / 10) + 1
+			s.StoryPreviewList.NumberOfPages = int(count/10) + 1
 		}
 		return
 	}(conn)
@@ -159,7 +159,6 @@ func (s StoryRepoImpl) FindAll(page string, newStoriesQuery bool) (*domain.Story
 
 func (s StoryRepoImpl) FindAllByUsername(username string) (*[]domain.StoryDto, error) {
 	conn := database.MongoConn
-
 
 	cur, err := conn.StoryCollection.Find(context.TODO(), bson.D{{"authorUsername", username}})
 
@@ -361,7 +360,7 @@ func (s StoryRepoImpl) DisLikeStoryById(storyId primitive.ObjectID, username str
 	return nil
 }
 
-func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string) (*domain.StoryDto, error) {
+func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string, userIp string) (*domain.StoryDto, error) {
 	conn := database.MongoConn
 
 	err := conn.StoryCollection.FindOne(context.TODO(), bson.D{{"_id", storyID}}).Decode(&s.StoryDto)
@@ -375,7 +374,7 @@ func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string) (*d
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -393,6 +392,48 @@ func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string) (*d
 		if err != nil {
 			panic(err)
 		}
+		return
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		hasher := new(domain.Authentication)
+
+		identity := new(domain.Identity)
+
+		identityArr, err := hasher.SignToken([]byte(userIp))
+
+		if err != nil {
+			panic("Couldn't hash identity")
+		}
+
+		err = conn.IdentityCollection.FindOne(context.TODO(), bson.D{{"identifier", identityArr}, {"storyId", storyID}}).Decode(&identity)
+
+		if err != nil {
+			_, err = conn.StoryCollection.UpdateOne(context.TODO(), bson.D{{"_id", storyID}}, bson.M{"$inc": bson.M{"views": 1}})
+
+			if err != nil {
+				fmt.Println(fmt.Sprintf("%v", err))
+			}
+
+			val, err := hasher.SignToken([]byte(userIp))
+
+			if err != nil {
+				panic("Couldn't hash identity")
+			}
+
+			identity.Identifier = val
+			identity.Id = primitive.NewObjectID()
+			identity.StoryId = storyID
+
+			_, err = conn.IdentityCollection.InsertOne(context.TODO(), identity)
+
+			if err != nil {
+				panic("Couldn't save identity")
+			}
+		}
+
 		return
 	}()
 
