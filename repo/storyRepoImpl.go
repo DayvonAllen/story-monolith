@@ -408,7 +408,7 @@ func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string, use
 			panic("Couldn't hash identity")
 		}
 
-		err = conn.IdentityCollection.FindOne(context.TODO(), bson.D{{"identifier", identityArr}, {"storyId", storyID}}).Decode(&identity)
+		err = conn.IdentityCollection.FindOne(context.TODO(), bson.D{{"identifier", identityArr}, {"storyId", storyID}, {"username", username}}).Decode(&identity)
 
 		if err != nil {
 			_, err = conn.StoryCollection.UpdateOne(context.TODO(), bson.D{{"_id", storyID}}, bson.M{"$inc": bson.M{"views": 1}})
@@ -426,6 +426,7 @@ func (s StoryRepoImpl) FindById(storyID primitive.ObjectID, username string, use
 			identity.Identifier = val
 			identity.Id = primitive.NewObjectID()
 			identity.StoryId = storyID
+			identity.Username = username
 
 			_, err = conn.IdentityCollection.InsertOne(context.TODO(), identity)
 

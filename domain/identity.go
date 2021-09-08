@@ -6,4 +6,5 @@ type Identity struct {
 	Id primitive.ObjectID `bson:"_id" json:"id"`
 	Identifier []byte      `bson:"identifier" json:"identifier"`
 	StoryId primitive.ObjectID `bson:"storyId" json:"storyId"`
+	Username string `bson:"username" json:"username"`
 }
