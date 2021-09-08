@@ -12,6 +12,7 @@ import (
 func init() {
 	database.ConnectToDB()
 }
+
 func main() {
 	app := router.Setup()
 

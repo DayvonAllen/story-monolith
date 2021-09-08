@@ -79,6 +79,7 @@ type FeaturedStoryDto struct {
 	Preview        string             `json:"preview"`
 	LikeCount      int                `json:"likes"`
 	DislikeCount   int                `json:"dislikes"`
+	Views          int                `json:"views"`
 	Tag            Tag                `json:"tag"`
 	Updated        bool               `json:"updated"`
 	CreatedAt      time.Time          `json:"createdAt"`
